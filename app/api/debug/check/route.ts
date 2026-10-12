@@ -35,6 +35,13 @@ export async function GET() {
         session_secret_valid: !!(env.SESSION_SECRET && env.SESSION_SECRET.length >= 32),
         cron_secret_valid: !!(env.CRON_SECRET && env.CRON_SECRET.length >= 32),
       },
+      build: {
+        commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'unknown',
+        repo: process.env.VERCEL_GIT_REPO_SLUG || 'unknown',
+        branch: process.env.VERCEL_GIT_COMMIT_REF || 'unknown',
+        vercel_env: process.env.VERCEL_ENV || 'unknown',
+        gemini_model_in_use: env.GEMINI_MODEL,
+      },
       app: {
         base_url: env.APP_BASE_URL,
         admin_password_set: !!(env.ADMIN_PASSWORD && env.ADMIN_PASSWORD.length > 0),
