@@ -118,7 +118,11 @@ export async function POST(req: NextRequest) {
 
       // Only accept from admin
       if (chatId !== parseInt(env.TELEGRAM_ADMIN_CHAT_ID)) {
-        await answerCallbackQuery(queryId, 'Not authorized', true)
+        await answerCallbackQuery(
+          queryId,
+          `Not authorized. Your Telegram ID is ${chatId}. If you are the admin, set TELEGRAM_ADMIN_CHAT_ID to this number in Vercel and redeploy.`,
+          true
+        )
         return NextResponse.json({ ok: true })
       }
 
