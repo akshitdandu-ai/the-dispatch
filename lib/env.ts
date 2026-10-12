@@ -39,6 +39,7 @@ export function getEnv(): Env {
       ...process.env,
       SUPABASE_URL: process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY,
+      GEMINI_MODEL: process.env.GEMINI_MODEL || process.env.GOOGLE_AI_MODEL,
       GEMINI_API_KEY:
         process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     })
