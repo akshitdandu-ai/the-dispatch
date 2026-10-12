@@ -6,6 +6,11 @@ let client: GoogleGenerativeAI | null = null
 
 function getClient(): GoogleGenerativeAI {
   if (!client) {
+    if (!env.GEMINI_API_KEY) {
+      throw new Error(
+        'GEMINI_API_KEY is not set on this deployment. Add it in Vercel (Production and Preview) and redeploy.'
+      )
+    }
     client = new GoogleGenerativeAI(env.GEMINI_API_KEY)
   }
   return client
