@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
         const weekKey = getWeekKeyIST()
         const { data: issue } = await supabase.from('issues').select('id, status').eq('week_key', weekKey).single()
 
-        if (issue?.status === 'in_review') {
+        if (issue && (issue.status === 'draft' || issue.status === 'in_review')) {
           await sendTelegramMessage(
             '✅ <b>Confirm final draft?</b>\n\nAfter confirmation, emails will send Thu 08:00 IST.',
             [
@@ -183,17 +183,29 @@ export async function POST(req: NextRequest) {
             ],
             String(chatId)
           )
+        } else {
+          await sendTelegramMessage(
+            issue
+              ? `ℹ️ This week's issue is already <b>${issue.status}</b>, nothing to confirm.`
+              : 'ℹ️ There is no issue for this week yet. Run selection first.',
+            undefined,
+            String(chatId)
+          )
         }
       } else if (data === 'confirm_yes') {
         // Mark as confirmed
         const weekKey = getWeekKeyIST()
-        const { error } = await supabase
+        const { data: confirmed, error } = await supabase
           .from('issues')
           .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
           .eq('week_key', weekKey)
+          .in('status', ['draft', 'in_review'])
+          .select('id')
 
         if (error) {
           await answerCallbackQuery(queryId, 'Error confirming', true)
+        } else if (!confirmed || confirmed.length === 0) {
+          await answerCallbackQuery(queryId, 'Already confirmed or sent', true)
         } else {
           await answerCallbackQuery(queryId, '🚀 Confirmed! Newsletter will send Thu 08:00 IST')
           await sendTelegramMessage('✅ <b>Newsletter confirmed!</b>\n\nWill send to all subscribers Thursday morning.', undefined, String(chatId))
