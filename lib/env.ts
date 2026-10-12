@@ -11,7 +11,7 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional().default(''),
 
   GEMINI_API_KEY: z.string().optional().default(''),
-  GEMINI_MODEL: z.string().optional().default('gemini-2.0-flash'),
+  GEMINI_MODEL: z.string().optional().default('gemini-3.8-flash'),
 
   TELEGRAM_BOT_TOKEN: z.string().optional().default(''),
   TELEGRAM_WEBHOOK_SECRET: z.string().optional().default(''),

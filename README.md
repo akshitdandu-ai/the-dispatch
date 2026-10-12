@@ -273,7 +273,7 @@ npm run typecheck && npm test   # Verify code
 - Visit https://aistudio.google.com/apikey
 - Create API key (free tier or with billing)
 - Paste into `GEMINI_API_KEY`
-- Verify the model ID in `.env.example` is current (e.g., `gemini-2.0-flash-001`)
+- Verify the model ID in `.env.example` is current (e.g., `gemini-3.8-flash`)
 
 ### 4. Telegram Bot
 
