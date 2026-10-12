@@ -40,83 +40,126 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dispatch-50 via-white to-dispatch-100">
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-dispatch-900 mb-4">The Dispatch</h1>
-          <p className="text-xl text-slate-600">
-            Weekly newsletter on the Indian startup ecosystem
-          </p>
-        </div>
-
-        {/* Signup Form */}
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto mb-16">
-          <h2 className="text-2xl font-bold mb-6">Subscribe</h2>
-          {!success ? (
-            <form onSubmit={handleSubscribe} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-dispatch-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Name (optional)</label>
-                <input
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-dispatch-500 focus:border-transparent"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-dispatch-600 text-white font-bold py-2 rounded-lg hover:bg-dispatch-700 transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Subscribing...' : 'Subscribe'}
-              </button>
-            </form>
-          ) : (
-            <div className="text-center">
-              <div className="text-4xl mb-3">✓</div>
-              <p className="text-slate-600 font-medium">{message}</p>
-            </div>
-          )}
-
-          {message && !success && (
-            <p className="text-red-600 text-sm mt-4 text-center">{message}</p>
-          )}
-        </div>
-
-        {/* About */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-16">
-          <h2 className="text-2xl font-bold mb-4">What is The Dispatch?</h2>
-          <p className="text-slate-600 mb-4">
-            A weekly newsletter curated by Shreya for founders, operators, and VCs building India's startup ecosystem.
-          </p>
-          <p className="text-slate-600">
-            We surface counterintuitive stories, under-reported trends, and structural shifts—delivered in plain English with editorial commentary on what matters.
-          </p>
-        </div>
-
-        {/* Admin Link */}
-        <div className="text-center">
-          <Link
-            href="/admin"
-            className="text-dispatch-600 hover:text-dispatch-700 font-medium"
-          >
-            Admin Dashboard
+    <div className="dp-root">
+      <nav className="dp-nav">
+        <div className="dp-nav-inner">
+          <Link href="/" className="dp-brand">
+            The <span>Dispatch</span>
+          </Link>
+          <Link href="/admin" className="dp-navlink">
+            Admin
           </Link>
         </div>
-      </div>
+      </nav>
+
+      <section className="dp-hero">
+        <h1>
+          The week in Indian startups, <em>edited</em> not aggregated.
+        </h1>
+        <p>
+          A weekly newsletter for founders, operators and VCs: under-reported stories, structural shifts and plain-English
+          commentary.
+        </p>
+
+        <div className="paper paper-scroll" aria-label="Sample edition layout">
+          <p className="sc-label" style={{ textAlign: 'center', margin: '0 0 6px' }}>
+            Sample layout &middot; Weekly edition
+          </p>
+          <h2 className="masthead">The Dispatch</h2>
+          <hr className="paper-rule" />
+          <div className="paper-cols">
+            <article>
+              <p className="sc-label">Funding &amp; VC</p>
+              <h3>A headline for the week&rsquo;s sharpest funding story</h3>
+              <p className="src">Source name</p>
+              <p>
+                Each story gets two or three sentences of editorial commentary: what happened, why it matters and what
+                most coverage missed. Numbers first, plain English always.
+              </p>
+            </article>
+            <article>
+              <p className="sc-label">Policy &amp; Regulation</p>
+              <h3>What a new rule changes for founders</h3>
+              <p className="src">Source name</p>
+              <p>
+                Eight to ten stories span at least three topics, so the issue reads as a view of the whole ecosystem and not
+                a single beat.
+              </p>
+            </article>
+            <article>
+              <p className="sc-label">IPOs &amp; Exits</p>
+              <h3>Where public markets are rewarding discipline</h3>
+              <p className="src">Source name</p>
+              <p>
+                Every issue is reviewed and confirmed by an editor before it goes out. Nothing is sent without a human yes.
+              </p>
+            </article>
+          </div>
+        </div>
+
+        <a href="#subscribe">
+          <button type="button" className="dp-btn dp-btn-lg">
+            Subscribe
+          </button>
+        </a>
+        <div className="dp-bounce" aria-hidden="true">
+          &darr;
+        </div>
+      </section>
+
+      <section id="subscribe" className="dp-wrap" style={{ padding: '48px 24px 96px' }}>
+        <div className="dp-grid">
+          <div className="dp-card">
+            <h2 className="dp-h2">Subscribe</h2>
+            <p className="dp-muted" style={{ marginBottom: 24 }}>
+              One email a week. Unsubscribe any time.
+            </p>
+            {!success ? (
+              <form onSubmit={handleSubscribe} className="dp-stack" style={{ gap: 16 }}>
+                <div>
+                  <label className="dp-label">Email</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="dp-label">Name (optional)</label>
+                  <input type="text" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <button type="submit" disabled={loading} className="dp-btn">
+                  {loading ? 'Subscribing...' : 'Subscribe'}
+                </button>
+              </form>
+            ) : (
+              <div className="dp-note">
+                <div style={{ fontSize: 28, color: '#3fb950', marginBottom: 6 }}>&#10003;</div>
+                {message}
+              </div>
+            )}
+            {message && !success && (
+              <p className="dp-note err" style={{ marginTop: 16 }}>
+                {message}
+              </p>
+            )}
+          </div>
+
+          <div className="dp-card">
+            <h2 className="dp-h2">What is The Dispatch?</h2>
+            <p className="dp-muted" style={{ marginBottom: 12 }}>
+              A weekly newsletter curated by Shreya for founders, operators, and VCs building India&rsquo;s startup
+              ecosystem.
+            </p>
+            <p className="dp-muted">
+              We surface counterintuitive stories, under-reported trends, and structural shifts, delivered in plain English
+              with editorial commentary on what matters.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

@@ -1,81 +1,222 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 
+type Pick = { topic: string; commentary: string; title?: string; url?: string; source?: string }
+type Run = { job: string; ok: boolean; at: string; summary: string }
+type Overview = {
+  weekKey: string
+  articlesThisWeek: number
+  issue: {
+    week_key: string
+    status: string
+    subject: string
+    intro: string
+    topics: string[] | null
+    reminder_sent_at: string | null
+    confirmed_at: string | null
+    sent_at: string | null
+  } | null
+  picks: Pick[]
+  runs: Run[]
+}
+
+const ACTIONS = [
+  { job: 'ingest', title: 'Fetch articles', text: 'Pull this week’s stories from every active feed.', button: 'Run Ingest Now' },
+  { job: 'select', title: 'Select stories', text: 'Let the editor model pick the stories and draft the commentary.', button: 'Run Selection Now' },
+  { job: 'remind', title: 'Telegram reminder', text: 'Nudge the admin chat that the draft needs review.', button: 'Send Reminder Now' },
+  { job: 'send', title: 'Send newsletter', text: 'Email the confirmed issue to every active subscriber.', button: 'Send Newsletter' },
+] as const
+
 export default function AdminPage() {
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
+  const [running, setRunning] = useState<string | null>(null)
+  const [data, setData] = useState<Overview | null>(null)
+  const [loadError, setLoadError] = useState('')
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/issue', { cache: 'no-store' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+      setData(json)
+      setLoadError('')
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Could not load status')
+    }
+  }, [])
+
+  useEffect(() => {
+    refresh()
+  }, [refresh])
 
   const triggerJob = async (job: string) => {
+    if (job === 'send' && !window.confirm('Send the newsletter to all active subscribers now?')) return
+    setRunning(job)
+    setMessage(null)
     try {
-      const res = await fetch(`/api/admin/trigger/${job}`, {
-        method: 'POST',
+      const res = await fetch(`/api/admin/trigger/${job}`, { method: 'POST' })
+      const json = await res.json()
+      setMessage({
+        text: json.message || json.error || (res.ok ? 'Job triggered' : `Job failed (HTTP ${res.status})`),
+        ok: res.ok && json.success !== false,
       })
-      const data = await res.json()
-      setMessage(data.message || data.error || (res.ok ? 'Job triggered' : `Job failed (HTTP ${res.status})`))
-    } catch (err) {
-      setMessage('Error triggering job')
+    } catch {
+      setMessage({ text: 'Error triggering job', ok: false })
+    } finally {
+      setRunning(null)
+      refresh()
     }
   }
 
+  const issue = data?.issue ?? null
+  const status = issue?.status
+  const done: Record<string, boolean> = {
+    ingest: (data?.articlesThisWeek ?? 0) > 0,
+    select: !!issue,
+    remind: !!issue?.reminder_sent_at,
+    confirm: status === 'confirmed' || status === 'sending' || status === 'sent',
+    send: status === 'sent',
+  }
+  const steps = [
+    { key: 'ingest', label: 'Ingest', title: 'Articles fetched', hint: data ? `${data.articlesThisWeek} articles this week` : '' },
+    { key: 'select', label: 'Select', title: 'Draft created', hint: issue?.subject || 'No draft for this week yet' },
+    { key: 'remind', label: 'Remind', title: 'Reminder sent', hint: 'Telegram message to the admin chat' },
+    { key: 'confirm', label: 'Confirm', title: 'Editor confirmation', hint: 'Done in Telegram: Confirm final draft' },
+    { key: 'send', label: 'Send', title: 'Delivered to subscribers', hint: issue?.sent_at ? 'Sent' : 'Waiting for confirmation' },
+  ]
+  const activeKey = steps.find((s) => !done[s.key])?.key
+  const stateOf = (key: string) => (done[key] ? 'done' : key === activeKey ? 'active' : 'pending')
+
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
-
-        <div className="space-y-6">
-          {/* Manual Triggers */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-4">Manual Triggers</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button
-                onClick={() => triggerJob('ingest')}
-                className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-              >
-                Run Ingest Now
-              </button>
-              <button
-                onClick={() => triggerJob('select')}
-                className="bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-              >
-                Run Selection Now
-              </button>
-              <button
-                onClick={() => triggerJob('remind')}
-                className="bg-yellow-600 text-white py-2 rounded-lg hover:bg-yellow-700"
-              >
-                Send Reminder Now
-              </button>
-              <button
-                onClick={() => triggerJob('send')}
-                className="bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
-              >
-                Send Newsletter
-              </button>
-            </div>
-          </div>
-
-          {message && (
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg">
-              {message}
-            </div>
-          )}
-
-          {/* Status */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-4">System Status</h2>
-            <p className="text-slate-600">
-              Dashboard features (live feed, subscribers management, etc.) coming soon.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-8">
-          <Link href="/" className="text-dispatch-600 hover:text-dispatch-700">
-            ← Back to Home
+    <div className="dp-root">
+      <nav className="dp-nav">
+        <div className="dp-nav-inner">
+          <Link href="/" className="dp-brand">
+            The <span>Dispatch</span>
           </Link>
+          <span className="dp-navlink">Admin</span>
         </div>
-      </div>
+      </nav>
+
+      <main className="dp-wrap" style={{ padding: '48px 24px 96px' }}>
+        <div className="dp-grid">
+          <div className="dp-stack">
+            <div className="dp-card">
+              <h2 className="dp-h2">Pipeline actions</h2>
+              <p className="dp-muted" style={{ marginBottom: 24 }}>
+                Run each step by hand, in order.
+              </p>
+              <div className="dp-stack" style={{ gap: 20 }}>
+                {ACTIONS.map((a) => (
+                  <div key={a.job}>
+                    <div style={{ fontWeight: 600, color: '#fff', marginBottom: 2 }}>{a.title}</div>
+                    <p className="dp-muted" style={{ margin: '0 0 10px', fontSize: 13 }}>
+                      {a.text}
+                    </p>
+                    <button
+                      className={a.job === 'send' ? 'dp-btn dp-btn-ghost' : 'dp-btn'}
+                      disabled={running !== null}
+                      onClick={() => triggerJob(a.job)}
+                    >
+                      {running === a.job ? 'Running…' : a.button}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {message && <div className={message.ok ? 'dp-note' : 'dp-note err'}>{message.text}</div>}
+
+            <div className="dp-card">
+              <h2 className="dp-h2" style={{ fontSize: 18 }}>
+                Recent activity
+              </h2>
+              {data?.runs?.length ? (
+                data.runs.map((r, i) => (
+                  <div className="dp-log" key={i}>
+                    <b style={{ color: r.ok ? '#3fb950' : '#f85149' }}>{r.job}</b>
+                    <span>{r.summary || (r.ok ? 'ok' : 'failed')}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="dp-muted">No runs logged yet.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="dp-stack">
+            <div className="dp-card">
+              <div className="dp-tracker" aria-label="Pipeline progress">
+                {steps.map((s) => (
+                  <div className="t" key={s.key}>
+                    <div className={`dp-dot ${stateOf(s.key) === 'done' ? 'done' : stateOf(s.key) === 'active' ? 'active' : ''}`} />
+                    <span>{s.label}</span>
+                  </div>
+                ))}
+              </div>
+              {loadError && (
+                <p className="dp-note err" style={{ marginTop: 16 }}>
+                  {loadError}
+                </p>
+              )}
+            </div>
+
+            <div className="dp-stack" style={{ gap: 12 }}>
+              {steps.map((s) => (
+                <div className={`dp-step ${stateOf(s.key)}`} key={s.key}>
+                  <div className="mark">{done[s.key] ? '✓' : steps.indexOf(s) + 1}</div>
+                  <div>
+                    <h4>{s.title}</h4>
+                    <div className="dp-muted" style={{ fontSize: 13 }}>
+                      {s.hint}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="paper" style={{ padding: '28px 32px' }}>
+              <p className="sc-label" style={{ textAlign: 'center', margin: '0 0 6px' }}>
+                {issue ? `${issue.week_key} · ${issue.status}` : 'No draft yet'}
+              </p>
+              <h2 className="masthead">The Dispatch</h2>
+              <hr className="paper-rule" />
+              {issue ? (
+                <>
+                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 24, margin: '0 0 6px' }}>
+                    {issue.subject}
+                  </h3>
+                  <p style={{ fontFamily: "'Crimson Text', serif", fontSize: 15, margin: '0 0 16px' }}>{issue.intro}</p>
+                  <div className="paper-cols">
+                    {data?.picks.map((p, i) => (
+                      <article key={i}>
+                        <p className="sc-label">{p.topic}</p>
+                        <h3 style={{ fontSize: 18 }}>
+                          {p.url ? (
+                            <a href={p.url} target="_blank" rel="noreferrer" style={{ color: '#1c1c1c' }}>
+                              {p.title}
+                            </a>
+                          ) : (
+                            p.title
+                          )}
+                        </h3>
+                        <p className="src">{p.source}</p>
+                        <p>{p.commentary}</p>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p style={{ fontFamily: "'Crimson Text', serif", textAlign: 'center' }}>
+                  Run ingest, then selection, to draft this week&rsquo;s issue.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   )
 }
