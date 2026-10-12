@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifySession } from '@/lib/auth'
 import { errorMessage } from '@/lib/utils'
 import { runIngest } from '@/lib/jobs/ingest'
 import { runSelection } from '@/lib/jobs/select'
@@ -9,12 +8,6 @@ import { runSend } from '@/lib/jobs/send'
 export const maxDuration = 300
 
 export async function POST(req: NextRequest, context: any) {
-  const isAuthenticated = await verifySession()
-
-  if (!isAuthenticated) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const { job } = await context.params
 
   try {
