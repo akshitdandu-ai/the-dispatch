@@ -55,13 +55,28 @@ function extractJson(text: string): unknown {
   return JSON.parse(cleaned)
 }
 
-async function callGeminiWithRetry<T>(prompt: string, schema: z.ZodType<T>, maxRetries = 3): Promise<T> {
+function isRetryable(err: Error): boolean {
+  const m = err.message.toLowerCase()
+  return (
+    m.includes('429') ||
+    m.includes('500') ||
+    m.includes('503') ||
+    m.includes('overloaded') ||
+    m.includes('high demand') ||
+    m.includes('too many') ||
+    m.includes('fetch failed') ||
+    err instanceof SyntaxError ||
+    err instanceof z.ZodError
+  )
+}
+
+async function callModel<T>(modelName: string, prompt: string, schema: z.ZodType<T>, maxRetries: number): Promise<T> {
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const model = getClient().getGenerativeModel({
-        model: env.GEMINI_MODEL,
+        model: modelName,
         generationConfig: {
           temperature: 0.7,
           topK: 40,
@@ -75,16 +90,9 @@ async function callGeminiWithRetry<T>(prompt: string, schema: z.ZodType<T>, maxR
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
 
-      const retryable =
-        lastError.message.includes('429') ||
-        lastError.message.includes('503') ||
-        lastError.message.toLowerCase().includes('too many') ||
-        lastError instanceof SyntaxError ||
-        lastError instanceof z.ZodError
-
-      if (retryable && attempt < maxRetries - 1) {
-        const backoffMs = Math.pow(2, attempt) * 1000 + Math.random() * 1000
-        console.log(`Gemini call failed (${lastError.message.slice(0, 100)}), retrying in ${Math.round(backoffMs)}ms`)
+      if (isRetryable(lastError) && attempt < maxRetries - 1) {
+        const backoffMs = Math.pow(2, attempt + 1) * 1000 + Math.random() * 1000
+        console.log(`Gemini ${modelName} failed (${lastError.message.slice(0, 100)}), retrying in ${Math.round(backoffMs)}ms`)
         await new Promise((resolve) => setTimeout(resolve, backoffMs))
         continue
       }
@@ -94,6 +102,26 @@ async function callGeminiWithRetry<T>(prompt: string, schema: z.ZodType<T>, maxR
   }
 
   throw lastError || new Error('Failed to call Gemini after retries')
+}
+
+async function callGeminiWithRetry<T>(prompt: string, schema: z.ZodType<T>, maxRetries = 5): Promise<T> {
+  const fallbacks = (process.env.GEMINI_FALLBACK_MODELS || '')
+    .split(',')
+    .map((m) => m.trim())
+    .filter(Boolean)
+  const models = [env.GEMINI_MODEL, ...fallbacks.filter((m) => m !== env.GEMINI_MODEL)]
+
+  let lastError: Error | null = null
+  for (const modelName of models) {
+    try {
+      return await callModel(modelName, prompt, schema, maxRetries)
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+      console.error(`Gemini model ${modelName} failed:`, lastError.message)
+    }
+  }
+
+  throw lastError || new Error('Failed to call Gemini')
 }
 
 export async function selectArticles(
