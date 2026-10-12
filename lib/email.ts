@@ -11,7 +11,7 @@ function getTransporter(): nodemailer.Transporter {
       service: 'gmail',
       auth: {
         user: env.GMAIL_USER,
-        pass: env.GMAIL_APP_PASSWORD,
+        pass: env.GMAIL_APP_PASSWORD.replace(/\s+/g, ''),
       },
       pool: true,
       maxConnections: 3,
@@ -190,22 +190,25 @@ export async function sendEmails(
           },
         })
 
-        await supabase.from('send_log').insert({
-          issue_id: issueId,
-          subscriber_id: subscriber.id,
-          status: 'sent',
-        })
+        await supabase.from('send_log').upsert(
+          { issue_id: issueId, subscriber_id: subscriber.id, status: 'sent', error: null, sent_at: new Date().toISOString() },
+          { onConflict: 'issue_id,subscriber_id' }
+        )
 
         sent++
       } catch (err) {
         console.error(`Failed to send to ${subscriber.email}:`, err)
 
-        await supabase.from('send_log').insert({
-          issue_id: issueId,
-          subscriber_id: subscriber.id,
-          status: 'failed',
-          error: err instanceof Error ? err.message : String(err),
-        })
+        await supabase.from('send_log').upsert(
+          {
+            issue_id: issueId,
+            subscriber_id: subscriber.id,
+            status: 'failed',
+            error: err instanceof Error ? err.message : String(err),
+            sent_at: new Date().toISOString(),
+          },
+          { onConflict: 'issue_id,subscriber_id' }
+        )
       }
 
       // Respect daily cap
