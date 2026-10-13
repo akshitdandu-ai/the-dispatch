@@ -9,6 +9,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
+  const [kind, setKind] = useState<'ok' | 'info' | 'err'>('ok')
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,16 +25,22 @@ export default function HomePage() {
 
       const data = await res.json()
 
-      if (res.ok) {
+      if (res.ok && data.success !== false) {
         setSuccess(true)
+        setKind('ok')
         setMessage(data.message)
         setEmail('')
         setName('')
+      } else if (res.ok) {
+        setKind('info')
+        setMessage(data.message || 'You are already on the list.')
       } else {
+        setKind('err')
         setMessage(data.message || 'Subscription failed')
       }
     } catch (err) {
-      setMessage('Error subscribing')
+      setKind('err')
+      setMessage('Could not reach the server. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -135,13 +142,13 @@ export default function HomePage() {
                 </button>
               </form>
             ) : (
-              <div className="dp-note">
+              <div className="dp-note" role="status">
                 <div style={{ fontSize: 28, color: '#3fb950', marginBottom: 6 }}>&#10003;</div>
                 {message}
               </div>
             )}
             {message && !success && (
-              <p className="dp-note err" style={{ marginTop: 16 }}>
+              <p className={kind === 'err' ? 'dp-note err' : 'dp-note'} role="status" style={{ marginTop: 16 }}>
                 {message}
               </p>
             )}

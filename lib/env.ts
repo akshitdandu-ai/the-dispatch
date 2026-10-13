@@ -3,8 +3,8 @@ import { z } from 'zod'
 const envSchema = z.object({
   APP_BASE_URL: z.string().url().optional().default('http://localhost:3000'),
   ADMIN_PASSWORD: z.string().default('admin'),
-  SESSION_SECRET: z.string().min(32).optional().default('0'.repeat(32)),
-  CRON_SECRET: z.string().min(32).optional().default('0'.repeat(32)),
+  SESSION_SECRET: z.string().optional().default(''),
+  CRON_SECRET: z.string().optional().default(''),
   ADMIN_EMAIL: z.string().email().optional().default('admin@example.com'),
 
   SUPABASE_URL: z.string().url().optional().default('https://ieswznfeslytsghixibk.supabase.co'),
