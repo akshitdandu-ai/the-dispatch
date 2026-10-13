@@ -1,9 +1,9 @@
 import { supabase } from '../db'
-import { nowIST, errorMessage, getWeekKeyIST } from '../utils'
+import { errorMessage, getWeekKeyIST } from '../utils'
 import { sendTelegramMessage } from '../telegram'
 
 export async function runReminder(): Promise<{ ok: boolean; message: string }> {
-  const jobStarted = nowIST()
+  const jobStarted = new Date()
 
   try {
     const weekKey = getWeekKeyIST()
@@ -37,7 +37,7 @@ export async function runReminder(): Promise<{ ok: boolean; message: string }> {
         ])
 
         // Mark reminder sent
-        await supabase.from('issues').update({ reminder_sent_at: nowIST().toISOString() }).eq('id', issue.id)
+        await supabase.from('issues').update({ reminder_sent_at: new Date().toISOString() }).eq('id', issue.id)
 
         return { ok: true, message: 'Reminder sent' }
       } catch (err) {
@@ -56,7 +56,7 @@ export async function runReminder(): Promise<{ ok: boolean; message: string }> {
       job: 'reminder',
       ok: true,
       started_at: jobStarted.toISOString(),
-      finished_at: nowIST().toISOString(),
+      finished_at: new Date().toISOString(),
     })
   }
 }

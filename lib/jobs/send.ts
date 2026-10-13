@@ -1,10 +1,10 @@
 import { supabase } from '../db'
-import { nowIST, errorMessage, getWeekKeyIST } from '../utils'
+import { errorMessage, getWeekKeyIST } from '../utils'
 import { sendTelegramMessage } from '../telegram'
 import { sendEmails } from '../email'
 
 export async function runSend(): Promise<{ ok: boolean; message: string; sent?: number }> {
-  const jobStarted = nowIST()
+  const jobStarted = new Date()
 
   try {
     const weekKey = getWeekKeyIST()
@@ -53,7 +53,7 @@ export async function runSend(): Promise<{ ok: boolean; message: string; sent?: 
     if (result.allSent) {
       const { data: updatedIssue } = await supabase
         .from('issues')
-        .update({ status: 'sent', sent_at: nowIST().toISOString() })
+        .update({ status: 'sent', sent_at: new Date().toISOString() })
         .eq('id', issue.id)
         .select('id')
         .single()
@@ -80,7 +80,7 @@ export async function runSend(): Promise<{ ok: boolean; message: string; sent?: 
       ok: false,
       details: { error },
       started_at: jobStarted.toISOString(),
-      finished_at: nowIST().toISOString(),
+      finished_at: new Date().toISOString(),
     })
 
     return { ok: false, message: error }

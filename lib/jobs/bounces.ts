@@ -2,7 +2,7 @@ import { supabase } from '../db'
 import { nowIST } from '../utils'
 
 export async function runBounces(): Promise<{ ok: boolean; message: string; bounced?: number; unsubscribed?: number }> {
-  const jobStarted = nowIST()
+  const jobStarted = new Date()
 
   try {
     // In production, connect to Gmail IMAP and parse DSN emails
@@ -23,7 +23,7 @@ export async function runBounces(): Promise<{ ok: boolean; message: string; boun
       ok: true,
       details: result,
       started_at: jobStarted.toISOString(),
-      finished_at: nowIST().toISOString(),
+      finished_at: new Date().toISOString(),
     })
 
     return result
@@ -36,7 +36,7 @@ export async function runBounces(): Promise<{ ok: boolean; message: string; boun
       ok: false,
       details: { error },
       started_at: jobStarted.toISOString(),
-      finished_at: nowIST().toISOString(),
+      finished_at: new Date().toISOString(),
     })
 
     return { ok: false, message: error }

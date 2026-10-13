@@ -1,5 +1,5 @@
 import { supabase } from '../db'
-import { nowIST, errorMessage, getWeekKeyIST } from '../utils'
+import { errorMessage, getWeekKeyIST } from '../utils'
 import { selectArticles, generateCommentary, generateSubjectAndIntro } from '../gemini'
 
 interface SelectionResult {
@@ -60,7 +60,7 @@ async function validateAndRepair(
 }
 
 export async function runSelection(force = false): Promise<SelectionResult> {
-  const jobStarted = nowIST()
+  const jobStarted = new Date()
 
   try {
     const weekKey = getWeekKeyIST()
@@ -274,7 +274,7 @@ export async function runSelection(force = false): Promise<SelectionResult> {
       ok: true,
       details: { picks: picks.length, backups: backups.length, theme: selection.issue_theme },
       started_at: jobStarted.toISOString(),
-      finished_at: nowIST().toISOString(),
+      finished_at: new Date().toISOString(),
     })
 
     return {
@@ -293,7 +293,7 @@ export async function runSelection(force = false): Promise<SelectionResult> {
       ok: false,
       details: { error },
       started_at: jobStarted.toISOString(),
-      finished_at: nowIST().toISOString(),
+      finished_at: new Date().toISOString(),
     })
 
     return {

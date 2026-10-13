@@ -1,6 +1,6 @@
 import { supabase } from '../db'
 import { env } from '../env'
-import { sha256, errorMessage, normalizeUrl, normalizeTitle, titleSimilarity, getWeekKeyIST, nowIST } from '../utils'
+import { sha256, errorMessage, normalizeUrl, normalizeTitle, titleSimilarity, getWeekKeyIST } from '../utils'
 import Parser from 'rss-parser'
 
 interface IngestResult {
@@ -86,7 +86,7 @@ export async function runIngest(): Promise<IngestResult> {
   }
 
   const startTime = Date.now()
-  const jobStarted = nowIST()
+  const jobStarted = new Date()
 
   try {
     // Get all active sources
@@ -288,7 +288,7 @@ export async function runIngest(): Promise<IngestResult> {
       ok: true,
       details: result,
       started_at: jobStarted.toISOString(),
-      finished_at: nowIST().toISOString(),
+      finished_at: new Date().toISOString(),
     })
   } catch (err) {
     const error = errorMessage(err)
@@ -299,7 +299,7 @@ export async function runIngest(): Promise<IngestResult> {
       ok: false,
       details: { error },
       started_at: jobStarted.toISOString(),
-      finished_at: nowIST().toISOString(),
+      finished_at: new Date().toISOString(),
     })
 
     throw err
