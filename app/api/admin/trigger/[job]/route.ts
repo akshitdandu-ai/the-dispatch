@@ -4,6 +4,7 @@ import { runIngest } from '@/lib/jobs/ingest'
 import { runSelection } from '@/lib/jobs/select'
 import { runReminder } from '@/lib/jobs/reminder'
 import { runSend } from '@/lib/jobs/send'
+import { runConfirm } from '@/lib/jobs/confirm'
 
 export const maxDuration = 300
 
@@ -18,10 +19,13 @@ export async function POST(req: NextRequest, context: any) {
         result = await runIngest()
         break
       case 'select':
-        result = await runSelection()
+        result = await runSelection(true)
         break
       case 'remind':
-        result = await runReminder()
+        result = await runReminder(true)
+        break
+      case 'confirm':
+        result = await runConfirm()
         break
       case 'send':
         result = await runSend()

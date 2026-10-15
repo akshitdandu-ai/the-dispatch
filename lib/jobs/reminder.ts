@@ -2,7 +2,7 @@ import { supabase } from '../db'
 import { errorMessage, getWeekKeyIST } from '../utils'
 import { sendTelegramMessage } from '../telegram'
 
-export async function runReminder(): Promise<{ ok: boolean; message: string }> {
+export async function runReminder(force = false): Promise<{ ok: boolean; message: string }> {
   const jobStarted = new Date()
 
   try {
@@ -25,7 +25,7 @@ export async function runReminder(): Promise<{ ok: boolean; message: string }> {
     }
 
     // If draft or in_review and no reminder sent yet
-    if ((issue.status === 'draft' || issue.status === 'in_review') && !issue.reminder_sent_at) {
+    if ((issue.status === 'draft' || issue.status === 'in_review') && (force || !issue.reminder_sent_at)) {
       const message = `⏰ The Dispatch for this week isn't confirmed yet. Nothing will be sent until you confirm.`
 
       try {

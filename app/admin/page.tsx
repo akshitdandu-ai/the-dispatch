@@ -24,8 +24,9 @@ type Overview = {
 
 const ACTIONS = [
   { job: 'ingest', title: 'Fetch articles', text: 'Pull this week’s stories from every active feed.', button: 'Run Ingest Now' },
-  { job: 'select', title: 'Select stories', text: 'Let the editor model pick the stories and draft the commentary.', button: 'Run Selection Now' },
+  { job: 'select', title: 'Select stories', text: 'Pick the stories and draft the commentary. Each run replaces this week\u2019s draft with a fresh one.', button: 'Run Selection Now' },
   { job: 'remind', title: 'Telegram reminder', text: 'Nudge the admin chat that the draft needs review.', button: 'Send Reminder Now' },
+  { job: 'confirm', title: 'Confirm draft', text: 'Approve the draft for sending (same as Confirm in Telegram).', button: 'Confirm Draft' },
   { job: 'send', title: 'Send newsletter', text: 'Email the confirmed issue to every active subscriber.', button: 'Send Newsletter' },
 ] as const
 

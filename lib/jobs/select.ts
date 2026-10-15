@@ -68,17 +68,12 @@ export async function runSelection(force = false): Promise<SelectionResult> {
     // Check if issue already exists
     const { data: existingIssue } = await supabase.from('issues').select('id, status').eq('week_key', weekKey).single()
 
+    // The scheduled run never overwrites an existing issue. A manual run from the dashboard (force)
+    // always builds a fresh draft, so the pipeline can be run again and again.
     if (existingIssue && !force) {
       return {
         ok: false,
-        message: `Issue for week ${weekKey} already exists with status ${existingIssue.status}. Use force=true to regenerate.`,
-      }
-    }
-
-    if (existingIssue && existingIssue.status !== 'draft' && existingIssue.status !== 'in_review' && !force) {
-      return {
-        ok: false,
-        message: `Cannot regenerate issue with status ${existingIssue.status}`,
+        message: `This week's issue (${weekKey}) already exists (status: ${existingIssue.status}); the automatic run leaves it alone. Use "Run Selection Now" on the dashboard to generate a fresh draft.`,
       }
     }
 
@@ -230,8 +225,18 @@ export async function runSelection(force = false): Promise<SelectionResult> {
           subject,
           intro,
           topics: Array.from(new Set([...picks, ...backups].map((p) => p.topic))),
+          status: 'draft',
+          confirmed_at: null,
+          reminder_sent_at: null,
+          sent_to_telegram_at: null,
+          sent_at: null,
+          recipients_total: 0,
+          recipients_sent: 0,
         })
         .eq('id', issueId)
+
+      // A fresh draft starts a fresh delivery: forget who already received the previous copy.
+      await supabase.from('send_log').delete().eq('issue_id', issueId)
     }
 
     // Create issue items (picks and backups)

@@ -24,7 +24,13 @@ export async function runSend(): Promise<{ ok: boolean; message: string; sent?: 
     // Only proceed if confirmed or already sending (resuming)
     if (issue.status !== 'confirmed' && issue.status !== 'sending') {
       console.log(`Issue status is ${issue.status}, not sending`)
-      return { ok: false, message: `Issue status is ${issue.status}, refusing to send` }
+      return {
+        ok: false,
+        message:
+          issue.status === 'sent'
+            ? 'This issue was already sent to all subscribers. To test again: Run Selection Now (fresh draft), Confirm Draft, then Send Newsletter.'
+            : `Issue status is ${issue.status}. Click Confirm Draft first, then send.`,
+      }
     }
 
     // Transition to sending if not already (idempotent with conditional update)
